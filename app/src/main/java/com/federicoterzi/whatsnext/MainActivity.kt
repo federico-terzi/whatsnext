@@ -3,6 +3,7 @@ package com.federicoterzi.whatsnext
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import com.federicoterzi.whatsnext.model.Lesson
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.OkHttpClient
@@ -30,6 +31,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestSchedule() {
+        progressBar.visibility = View.VISIBLE
+
         doAsync {
             val client = OkHttpClient()
             val request = Request.Builder().url(REQUEST_URL).build()
@@ -56,6 +59,8 @@ class MainActivity : AppCompatActivity() {
                     "Non hai lezioni adesso, yey!"
                 }
                 currentTextView.text = currentLessonText
+
+                progressBar.visibility = View.GONE
             }
         }
     }
@@ -78,6 +83,9 @@ class MainActivity : AppCompatActivity() {
             val lesson = Lesson(title, teacher, room, startDate, endDate)
             output.add(lesson)
         }
+
+        // Sort the lessons
+        output.sortBy{lesson -> lesson.start.time }
 
         return output
     }
