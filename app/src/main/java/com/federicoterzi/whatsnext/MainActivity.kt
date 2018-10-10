@@ -9,6 +9,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
 import org.jetbrains.anko.uiThread
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -44,33 +45,39 @@ class MainActivity : AppCompatActivity() {
             val nextLesson = findNextLesson(lessons)
             Log.d("Lesson", nextLesson.toString())
 
-            // Populate the fields
-            uiThread {
-                roomTextView.text = nextLesson?.room
-                lessonTextView.text = nextLesson?.title
-                teacherTextView.text = nextLesson?.teacher
-                val format = SimpleDateFormat("HH:mm")
-                val finalDate = "${format.format(nextLesson?.start)} - ${format.format(nextLesson?.end)}"
-                dateTextView.text = finalDate
+            if (nextLesson != null) {
+                // Populate the fields
+                uiThread {
+                    roomTextView.text = nextLesson?.room
+                    lessonTextView.text = nextLesson?.title
+                    teacherTextView.text = nextLesson?.teacher
+                    val format = SimpleDateFormat("HH:mm")
+                    val finalDate = "${format.format(nextLesson?.start)} - ${format.format(nextLesson?.end)}"
+                    dateTextView.text = finalDate
 
-                val currentLessonText = if (currentLesson != null) {
-                    "La lezione di ${currentLesson?.title} finirà alle: ${format.format(currentLesson?.end)}"
-                }else{
-                    "Non hai lezioni adesso, yey!"
+                    val currentLessonText = if (currentLesson != null) {
+                        "La lezione di ${currentLesson?.title} finirà alle: ${format.format(currentLesson?.end)}"
+                    } else {
+                        "Non hai lezioni adesso, yey!"
+                    }
+                    currentTextView.text = currentLessonText
+
+                    progressBar.visibility = View.GONE
                 }
-                currentTextView.text = currentLessonText
-
-                progressBar.visibility = View.GONE
+            } else {
+                uiThread {
+                    toast("Basta lezioni per oggi bro").show()
+                }
             }
         }
     }
 
-    private fun extractLessons(response: JSONObject) : List<Lesson>{
+    private fun extractLessons(response: JSONObject): List<Lesson> {
         val output = mutableListOf<Lesson>()
 
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         val events = response.getJSONArray("events")
-        for (i in 0 until events.length()){
+        for (i in 0 until events.length()) {
             val event = events.getJSONObject(i)
             val title = event.getString("title")
             val startDate = format.parse(event.getString("start"))
@@ -85,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Sort the lessons
-        output.sortBy{lesson -> lesson.start.time }
+        output.sortBy { lesson -> lesson.start.time }
 
         return output
     }
@@ -94,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         val nowDate = Calendar.getInstance().time
 
         for (lesson in lessons) {
-            if (nowDate.after(lesson.start) && nowDate.before(lesson.end) ) {
+            if (nowDate.after(lesson.start) && nowDate.before(lesson.end)) {
                 return lesson
             }
         }
@@ -106,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         val nowDate = Calendar.getInstance().time
 
         for (lesson in lessons) {
-            if (nowDate.before(lesson.start) && lesson.start.time < ( nowDate.time + 1000 * 60* 60 * 8)) {
+            if (nowDate.before(lesson.start) && lesson.start.time < (nowDate.time + 1000 * 60 * 60 * 8)) {
                 return lesson
             }
         }
